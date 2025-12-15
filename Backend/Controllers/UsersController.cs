@@ -24,7 +24,7 @@ namespace Backend.Controllers
                 .Select(u => new FetchUserDTO(
                     u.UserName,
                     u.UserEmail
-                 )).FirstOrDefaultAsync();
+                 )).SingleOrDefaultAsync();
 
             return Ok(user);
         }
@@ -32,7 +32,6 @@ namespace Backend.Controllers
         [HttpPost]
         public async Task<ActionResult> AddNewUser(CreateUserDTO dto)
         {
-
             var user = new User {
                 UserName = dto.UserName,
                 UserEmail = dto.UserEmail,
@@ -43,6 +42,30 @@ namespace Backend.Controllers
             var fetchUserDto = new FetchUserDTO(user.UserName, user.UserEmail);
 
             return CreatedAtAction(nameof(GetUserById), new {id = user.Id }, fetchUserDto);
+        }
+
+        [HttpPatch("{id:int}")]
+        public async Task<ActionResult<FetchUserDTO>> PartialUpdateUser(int id, UpdateUserDTO dto)
+        {
+            var user = await _dbContext.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+            if (dto.UserName != null)
+            {
+                user.UserName = dto.UserName;
+            }
+            if (dto.UserEmail != null)
+            {
+                user.UserEmail = dto.UserEmail;
+            }
+
+            await _dbContext.SaveChangesAsync();
+
+            var fetchUserDto = new FetchUserDTO(user.UserName, user.UserEmail);
+            return Ok(fetchUserDto);
         }
     } 
 }
